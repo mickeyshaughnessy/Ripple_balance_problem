@@ -29,7 +29,8 @@ app.get('/', function(req, res){
 app.post('/', function(req, res){
     var AccountNumbers = req.body.AccountNumbers;
     var accounts = AccountNumbers.split(',');
-    var html = ''; 
+    var html = '';
+ 
     function ExtractData(i) {
         if( i < accounts.length ) {
             html += 'Account: ' + accounts[i] + '<br>';
@@ -38,12 +39,34 @@ app.post('/', function(req, res){
             ledger: 'validated'
             };
             var requestBalance = remote.requestAccountInfo(options, function(err, info) {
-                html += 'Balance: ' + info["account_data"]["Balance"] + ' (XRP) <br>';
+                html += 'Balance (XRP): ' + info["account_data"]["Balance"] + '<br>';
+                // insert get IOU code here and make it callback ExtractData(i+1)? 
                 ExtractData( i + 1 )
                 });
         }
         else { res.send(html); }
     }
+
     ExtractData(0)
 }); 
 app.listen(8080);
+
+
+/* What I want to do for IOUs:
+
+IOUs = {}
+requestIOU = remote.requestAccountLines(options, function(err, info) {
+    IOUs = info.lines        
+});
+
+values = {}
+for line in IOUs:  //python syntax
+    if line.currency in values.keys():
+        values[line.currency] += line.balance
+    else:
+        values[line.currency] = line.balance
+
+for currency in values:
+    html += 'Currency :' + currency + 'Total: ' + values[currency] + '<br>'
+
+
