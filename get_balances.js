@@ -34,13 +34,15 @@ app.post('/', function(req, res){
     };
   var requestBalance = remote.requestAccountInfo(options, function(err, info) {
     html += info["account_data"]["Balance"] + '.<br>';
+    console.log(html);
     /* process info */
     });
   var requestIOU = remote.requestAccountLines(options, function(err, info) {
     html += info.lines[0]['balance'] +'.<br>'
     //console.log(info.lines[0]['balance']);
     /* process info */
-    });   
+    }); 
+  //console.log(html)  
   res.send(html);
 });
 
