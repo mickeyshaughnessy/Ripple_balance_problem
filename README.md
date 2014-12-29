@@ -10,6 +10,6 @@ in comma separated form. Then, hit submit.
 
 The accounts and XRP balances are displayed. 
 
-The script requires the express, async and ripple-lib libraries. 
+The script requires the express, async, body parser and ripple-lib libraries. 
 
 
