@@ -11,6 +11,18 @@ var remote = new Remote({
   servers: [ 'wss://s1.ripple.com:443' ]
 });
 
+function Account(number) {
+    this.number = number;
+    this.balance = 0;
+    this.IOUs = {};
+}
+
+//function getAccountBalance(account_number){
+    
+function assign_value (input) {
+    return input;
+}
+    
 remote.connect(function() {
   remote.requestServerInfo(function(err, info) {
     });
@@ -40,6 +52,7 @@ app.post('/', function(req, res){
             };
             var requestBalance = remote.requestAccountInfo(options, function(err, info) {
                 html += 'Balance (XRP): ' + info["account_data"]["Balance"] + '<br>';
+                var x = assign_value(2); 
                 // insert get IOU code here and make it callback ExtractData(i+1)? 
                 ExtractData( i + 1 )
                 });
@@ -69,4 +82,4 @@ for line in IOUs:  //python syntax
 for currency in values:
     html += 'Currency :' + currency + 'Total: ' + values[currency] + '<br>'
 
-
+*/
