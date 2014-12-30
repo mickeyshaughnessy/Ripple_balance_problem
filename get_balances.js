@@ -50,12 +50,16 @@ app.post('/', function(req, res){
             account: accounts[i],
             ledger: 'validated'
             };
+            var IOUs = {}
             var requestBalance = remote.requestAccountInfo(options, function(err, info) {
                 html += 'Balance (XRP): ' + info["account_data"]["Balance"] + '<br>';
                 var x = assign_value(2); 
-                // insert get IOU code here and make it callback ExtractData(i+1)? 
-                ExtractData( i + 1 )
+                var requestIOU = remote.requestAccountLines(options, function(err, info) {
+                    IOUs = info.lines        
+                    ExtractData( i + 1 )
                 });
+                // insert get IOU code here and make it callback ExtractData(i+1)? 
+            });
         }
         else { res.send(html); }
     }
