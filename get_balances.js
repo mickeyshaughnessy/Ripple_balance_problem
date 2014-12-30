@@ -5,7 +5,7 @@ var async = require('async');
 app.use(bodyParser());
 
 /* Loading ripple-lib with Node.js */
-var Remote = require('../ripple-lib').Remote;
+var Remote = require('ripple-lib').Remote;
 
 var remote = new Remote({
   servers: [ 'wss://s1.ripple.com:443' ]
@@ -55,9 +55,16 @@ app.post('/', function(req, res){
                 html += 'Balance (XRP): ' + info["account_data"]["Balance"] + '<br>';
                 var x = assign_value(2); 
                 var requestIOU = remote.requestAccountLines(options, function(err, info) {
-                    IOUs = info.lines        
-                    ExtractData( i + 1 )
+                    var accountTotal = 0;
+                    IOUs = info.lines;
+
+                    ExtractData( i + 1 );
+                    for(i=0; i< IOUs.length; i++){
+                      accountTotal = parseInt(accountTotal + IOUs[i].balance);
+                    }
+                    console.log(accountTotal);
                 });
+               
                 // insert get IOU code here and make it callback ExtractData(i+1)? 
             });
         }
