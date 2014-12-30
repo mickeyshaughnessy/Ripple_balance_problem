@@ -7,15 +7,16 @@ app.use(bodyParser());
 var Remote = require('../ripple-lib').Remote;
 
 var remote = new Remote({
-  servers: [ 'wss://s1.ripple.com:443' ]
+    servers: [ 'wss://s1.ripple.com:443' ]
 });
 
-remote.connect(function() {
-  remote.requestServerInfo(function(err, info) {
+remote.connect( function() {
+    remote.requestServerInfo(function(err, info) {
+        if (err) {return console.error(err);}
     });
 });
 
-app.get('/', function(req, res){
+app.get('/', function (req, res){
     var html = '<form action="/" method="post">' +
                'Enter comma separated account number(s):' +
                '<input type="text" name="AccountNumbers" placeholder="..." />' +
@@ -25,7 +26,7 @@ app.get('/', function(req, res){
     res.send(html);
 });
 
-app.post('/', function(req, res){
+app.post('/', function (req, res){
     var accounts = req.body.AccountNumbers.split(',');
     var html = '';
     var emitter = new (require('events').EventEmitter);
@@ -43,15 +44,15 @@ app.post('/', function(req, res){
             account: accounts[i],
             ledger: 'validated'
             };
-            var requestBalance = remote.requestAccountInfo(options, function(err, info) {
+            var requestBalance = remote.requestAccountInfo(options, function (err, info) {
                 if (err) {
                     res.send('badly formed account(s) -- try again!');
                     return console.error(err);
                 }
-                balance = info["account_data"]["Balance"];
+                balance = info.account_data.Balance;
                 html += 'Balance (XRP): ' + balance + '<br>';
                 XRP_tot += parseFloat(balance); 
-                var requestIOU = remote.requestAccountLines(options, function(err, info) {
+                var requestIOU = remote.requestAccountLines(options, function (err, info) {
                     if (err) {
                         res.send('badly formed account(s) -- try again!');
                         return console.error(err);
