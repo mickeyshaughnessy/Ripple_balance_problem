@@ -19,10 +19,22 @@ function Account(number) {
 
 //function getAccountBalance(account_number){
     
-function assign_value (input) {
-    return input;
-}
-    
+//function appendIOUs (html, IOUs, i) {
+//    var values = {}; 
+//    for (var line in IOUs) {
+//        if (line.currency in values){
+//            values[line.currency] += parseFloat(line.balance)
+//        }
+//        else{
+//            values[line.currency] = parseFloat(line.balance)
+//        }
+//    }
+//    for (var currency in values){
+//        html += 'Currency :' + currency + 'Total: ' + values[currency] + '<br>'  
+//    }
+//    ExtractData( i + 1 )
+//}
+ 
 remote.connect(function() {
   remote.requestServerInfo(function(err, info) {
     });
@@ -42,6 +54,22 @@ app.post('/', function(req, res){
     var AccountNumbers = req.body.AccountNumbers;
     var accounts = AccountNumbers.split(',');
     var html = '';
+    
+    function appendIOUs (html, IOUs, i) {
+        var values = {};
+        for (var line in IOUs) {
+            if (line.currency in values){
+                values[line.currency] += parseFloat(line.balance)
+            }
+            else{
+                values[line.currency] = parseFloat(line.balance)
+            }
+        }
+        for (var currency in values){
+            html += 'Currency :' + currency + 'Total: ' + values[currency] + '<br>'
+        }
+        ExtractData( i + 1 )
+    }
  
     function ExtractData(i) {
         if( i < accounts.length ) {
@@ -53,10 +81,9 @@ app.post('/', function(req, res){
             var IOUs = {}
             var requestBalance = remote.requestAccountInfo(options, function(err, info) {
                 html += 'Balance (XRP): ' + info["account_data"]["Balance"] + '<br>';
-                var x = assign_value(2); 
                 var requestIOU = remote.requestAccountLines(options, function(err, info) {
-                    IOUs = info.lines        
-                    ExtractData( i + 1 )
+                    IOUs = info.lines;
+                    appendIOUs (html, IOUs, i)
                 });
                 // insert get IOU code here and make it callback ExtractData(i+1)? 
             });
