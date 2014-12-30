@@ -29,11 +29,42 @@ app.post('/', function(req, res){
     var accounts = req.body.AccountNumbers.split(',');
     var html = '';
     var emitter = new (require('events').EventEmitter);
-    emitter.on('done', function (res, html) { res.send(html); });
+    emitter.on('done', function (res, html) { 
+        html += 'TOTAL XRP: ' + XRP_tot + '<br>';
+        res.send(html);
+    });
    
-    /* This processes the IOUs, writes to the html string, checks to see if everything
-    is done, and calls the next account processing operation */ 
-    
+    var XRP_tot = 0;
+    /* This gets the account information and starts writing an html string */
+    function ExtractAccountData(i, finished, html) {
+        if (i < accounts.length) {
+            html += 'Account: ' + accounts[i] + '<br>';
+            var options = {
+            account: accounts[i],
+            ledger: 'validated'
+            };
+            var requestBalance = remote.requestAccountInfo(options, function(err, info) {
+                if (err) {
+                    res.send('badly formed account(s) -- try again!');
+                    return console.error(err);
+                }
+                balance = info["account_data"]["Balance"];
+                html += 'Balance (XRP): ' + balance + '<br>';
+                XRP_tot += parseFloat(balance); 
+                var requestIOU = remote.requestAccountLines(options, function(err, info) {
+                    if (err) {
+                        res.send('badly formed account(s) -- try again!');
+                        return console.error(err);
+                    }
+                    appendIOUs (html, info.lines, i, finished)
+                });
+            });
+        }
+    }
+  
+  /* This processes the IOUs, writes to the html string, checks to see if everything
+    is done, and calls the next account processing operation */
+
     function appendIOUs (html, IOUs, i, finished) {
         var totals = {};
         for (var j = 0; j < IOUs.length; j++) {
@@ -50,37 +81,11 @@ app.post('/', function(req, res){
         }
         finished += 1;
         if (finished == accounts.length){
-            emitter.emit('done', res, html);
-        } 
+            emitter.emit('done', res, html, XRP_tot);
+        }
         ExtractAccountData(i + 1, finished, html)
     }
  
-    /* This gets the account information and starts writing the html string */
-    function ExtractAccountData(i, finished, html) {
-        if (i < accounts.length) {
-            html += 'Account: ' + accounts[i] + '<br>';
-            var options = {
-            account: accounts[i],
-            ledger: 'validated'
-            };
-            var IOUs = {}
-            var requestBalance = remote.requestAccountInfo(options, function(err, info) {
-                if (err) {
-                    res.send('badly formed account(s) -- try again!');
-                    return console.error(err);
-                }
-                html += 'Balance (XRP): ' + info["account_data"]["Balance"] + '<br>';
-                var requestIOU = remote.requestAccountLines(options, function(err, info) {
-                    if (err) {
-                        res.send('badly formed account(s) -- try again!');
-                        return console.error(err);
-                    }
-                    appendIOUs (html, info.lines, i, finished)
-                });
-            });
-        }
-    }
-   
     /* Start looping through accounts */ 
     var finished = 0;
     ExtractAccountData(0, finished, html)
