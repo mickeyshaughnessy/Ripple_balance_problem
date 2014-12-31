@@ -4,7 +4,7 @@ var app = express();
 app.use(bodyParser());
 
 /* Loading ripple-lib with Node.js */
-var Remote = require('../ripple-lib').Remote;
+var Remote = require('ripple-lib').Remote;
 
 var remote = new Remote({
     servers: [ 'wss://s1.ripple.com:443' ]
