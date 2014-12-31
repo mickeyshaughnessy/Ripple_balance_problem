@@ -16,6 +16,14 @@ remote.connect( function() {
     });
 });
 
+function Totals() {
+    this.currencies = ['XRP'];
+    this.balances = {'XRP':0.0};
+    this.html = '';
+    this.emitter = new (require('events').EventEmitter);
+    //this.accounts = [];
+}
+
 app.get('/', function (req, res){
     var html = '<form action="/" method="post">' +
                'Enter comma separated account number(s):' +
@@ -26,74 +34,34 @@ app.get('/', function (req, res){
     res.send(html);
 });
 
-app.post('/', function (req, res){
-    var accounts = req.body.AccountNumbers.split(',');
-    var html = '';
-    var emitter = new (require('events').EventEmitter);
-    emitter.on('done', function (res, html) { 
-        html += 'TOTAL XRP: ' + XRP_tot + '<br>';
-        res.send(html);
-    });
-   
-    var XRP_tot = 0;
-    /* This gets the account information and starts writing an html string */
-    function ExtractAccountData(i, finished, html) {
-        if (i < accounts.length) {
-            html += 'Account: ' + accounts[i] + '<br>';
-            var options = {
-            account: accounts[i],
-            ledger: 'validated'
-            };
-            var requestBalance = remote.requestAccountInfo(options, function (err, info) {
-                if (err) {
-                    res.send('badly formed account(s) -- try again!');
-                    return console.error(err);
-                }
-                balance = info.account_data.Balance;
-                html += 'Balance (XRP): ' + balance + '<br>';
-                XRP_tot += parseFloat(balance); 
-                var requestIOU = remote.requestAccountLines(options, function (err, info) {
-                    if (err) {
-                        res.send('badly formed account(s) -- try again!');
-                        return console.error(err);
-                    }
-                    appendIOUs (html, info.lines, i, finished)
-                });
-            });
-        }
-    }
-  
-  /* This processes the IOUs, writes to the html string, checks to see if everything
-    is done, and calls the next account processing operation */
+/* The strategy in the post method (activated when the user clicks 'submit')
+is to create the objects needed to handle the data and then recursively 
+call the function to get the account data from the ripple API servers and 
+process it. The `totals` object stores overall totals and the html output 
+as they are constructed. When all accounts are finished being processed, a
+`done` event is emitted and the html response is sent out */
 
-    function appendIOUs (html, IOUs, i, finished) {
-        var totals = {};
-        for (var j = 0; j < IOUs.length; j++) {
-            var line = IOUs[j];
-            if (Object.keys(totals).indexOf(line.currency) > 0 ) {
-                totals[line.currency] += parseFloat(line.balance);
-            }
-            else{
-                totals[line.currency] = parseFloat(line.balance);
-            }
-        }
-        for (var currency in totals){
-            html += currency + ' Total: ' + totals[currency] + '<br>';
-        }
-        finished += 1;
-        if (finished == accounts.length){
-            emitter.emit('done', res, html, XRP_tot);
-        }
-        ExtractAccountData(i + 1, finished, html)
-    }
- 
+app.post('/', function (req, res){
+    var totals = new Totals()
+    totals.accounts = req.body.AccountNumbers.split(',');
+    
+    totals.emitter.on('done', function (totals) {
+        totals.html += '<br> -------- Overall Totals --------- <br>';
+        for (var currency in totals.balances) {
+            totals.html += currency + ': ' + 
+            totals.balances[currency].toString() + '<br>';
+        }; 
+        res.send(totals.html);
+    });
+
+    var getData = require('./processAccounts');
     /* Start looping through accounts */ 
     var finished = 0;
-    ExtractAccountData(0, finished, html)
+    getData.extractAccountData(0, finished, totals, remote)
 }); 
 app.listen(8080);
 
-// account strings for testing below
+/* account strings for testing below */
 //  rUB4uZESnjSp2r7Uw1PnKSPWNMkTDCMXDJ
 //  rUB4uZESnjSp2r7Uw1PnKSPWNMkTDCMXDJ,rUB4uZESnjSp2r7Uw1PnKSPWNMkTDCMXDJ
 //  rBTC1BgnrukYh9gfE8uL5dqnPCfZXUxiho,rUB4uZESnjSp2r7Uw1PnKSPWNMkTDCMXDJ,r4ffgYrACcB82bt99VnqH4B9GEntEypTcp
